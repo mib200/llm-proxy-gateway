@@ -28,7 +28,7 @@ export const generateAWSHeaders = async (
   const urlObj = new URL(url);
   const hostname = urlObj.hostname;
   headers['host'] = hostname;
-  let requestBody;
+  let requestBody: string | undefined;
   if (method !== 'GET' && body) {
     requestBody = JSON.stringify(body);
   }
@@ -63,8 +63,8 @@ export const bedrockPost = async (
     'POST',
     'bedrock',
     credentials?.awsRegion ?? 'us-east-1',
-    credentials?.awsAccessKeyId!,
-    credentials?.awsSecretAccessKey!,
+    credentials.awsAccessKeyId,
+    credentials.awsSecretAccessKey,
     credentials?.awsSessionToken || ''
   );
 
