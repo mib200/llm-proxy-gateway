@@ -4,3 +4,6 @@ build
 .wrangler
 public
 wrangler.toml
+graphify-out
+.claude
+llms
