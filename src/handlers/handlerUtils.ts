@@ -28,6 +28,7 @@ import { ConditionalRouter } from '../services/conditionalRouter';
 import { RouterError } from '../errors/RouterError';
 import { GatewayError } from '../errors/GatewayError';
 import { HookType } from '../middlewares/hooks/types';
+import { resolveCredentials } from '../services/credentialResolver';
 
 // Services
 import { CacheResponseObject, CacheService } from './services/cacheService';
@@ -1127,7 +1128,7 @@ export function constructConfigFromRequestHeaders(
         };
       }
     }
-    return convertKeysToCamelCase(parsedConfigJson, [
+    const camelCased = convertKeysToCamelCase(parsedConfigJson, [
       'override_params',
       'params',
       'checks',
@@ -1143,9 +1144,16 @@ export function constructConfigFromRequestHeaders(
       'virtualKeyDetails',
       'cb_config',
     ]) as any;
+    if (camelCased?.provider && !camelCased?.targets) {
+      return {
+        ...camelCased,
+        ...resolveCredentials(camelCased.provider, camelCased),
+      };
+    }
+    return camelCased;
   }
 
-  return {
+  const headerOptions: any = {
     provider: requestHeaders[`x-${POWERED_BY}-provider`],
     apiKey: requestHeaders['authorization']?.replace('Bearer ', ''),
     defaultInputGuardrails: defaultsConfig.input_guardrails,
@@ -1176,6 +1184,10 @@ export function constructConfigFromRequestHeaders(
       fireworksConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === CORTEX && cortexConfig),
     ...(requestHeaders[`x-${POWERED_BY}-provider`] === ORACLE && oracleConfig),
+  };
+  return {
+    ...headerOptions,
+    ...resolveCredentials(headerOptions.provider, headerOptions),
   };
 }
 
