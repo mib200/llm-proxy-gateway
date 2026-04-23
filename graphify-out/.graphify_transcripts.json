@@ -1,0 +1,3 @@
+  warning: could not transcribe tests/integration/src/handlers/round1.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+  warning: could not transcribe tests/integration/src/handlers/speech2.mp3: Video transcription requires faster-whisper. Run: pip install 'graphifyy[video]'
+[]
