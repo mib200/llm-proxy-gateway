@@ -10,11 +10,16 @@ import { createNodeWebSocket } from '@hono/node-ws';
 import { realTimeHandlerNode } from './handlers/realtimeHandlerNode';
 import { requestValidator } from './middlewares/requestValidator';
 
-// Extract the port number from the command line arguments
+// Extract the port number from the command line arguments or PORT env var
 const defaultPort = 8787;
 const args = process.argv.slice(2);
 const portArg = args.find((arg) => arg.startsWith('--port='));
-const port = portArg ? parseInt(portArg.split('=')[1]) : defaultPort;
+const envPort = process.env.PORT ? parseInt(process.env.PORT) : undefined;
+const port = portArg
+  ? parseInt(portArg.split('=')[1])
+  : envPort !== undefined && !Number.isNaN(envPort)
+    ? envPort
+    : defaultPort;
 
 const isHeadless = args.includes('--headless');
 
