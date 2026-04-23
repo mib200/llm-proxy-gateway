@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
 import { serve } from '@hono/node-server';
 
 import app from './index';
