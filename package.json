@@ -78,5 +78,8 @@
     "wrangler": "^3.97.0"
   },
   "bin": "build/start-server.js",
-  "type": "module"
+  "type": "module",
+  "volta": {
+    "node": "22.22.2"
+  }
 }
