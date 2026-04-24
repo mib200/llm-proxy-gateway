@@ -149,3 +149,5 @@ src/handlers/tests/.creds.json
 .cursor/
 graphify-out/cache/
 .serena/
+*/.worktree/*
+*/worktree/*

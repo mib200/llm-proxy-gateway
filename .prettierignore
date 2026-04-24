@@ -4,3 +4,11 @@ build
 .wrangler
 public
 wrangler.toml
+.worktree
+.claude
+.code-review-graph
+graphify-out
+.serena
+.github
+.vscode
+.idea
