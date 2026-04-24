@@ -1,57 +1,72 @@
 # Session Summary — llm-proxy-gateway
 
-**When:** 2026-04-23T18:26:48Z
-**Branch:** main @ dcd8115e
-**Previous session:** _(none)_
+**When:** 2026-04-24T03:53:32Z
+**Branch:** main @ 59215eb1 (worktree branch `worktree-fix-pre-commit-hook` preserved with 6 unmerged fix commits)
+**Previous session:** 2026-04-23T18:26:48Z (env-creds-fallback merge)
 
 ## Completed
 
-- `src/services/credentialResolver.ts` (new) — generic provider→env map covering 20+ providers (bedrock, sagemaker, openai, openrouter, anthropic, groq, cerebras, mistral, cohere, deepseek, fireworks, together, perplexity, xai, google, azure-openai, azure-ai, vertex-ai, workers-ai, huggingface, stability-ai, oracle, cortex). Precedence: headers > conf.json integrations > env.
-- `src/handlers/handlerUtils.ts` — `resolveCredentials` wired into both return paths of `constructConfigFromRequestHeaders` (Path A: x-portkey-config branch; Path B: header-only branch).
-- `src/start-server.ts` — added `import 'dotenv/config'` at top; auto-loads `.env` for all Node entries.
-- `package.json` — added `dotenv@17.4.2` dep; `dev:node` = `tsx watch src/start-server.ts` (hot reload).
-- Merged worktree `feat/env-creds-fallback` into `main` via `--no-ff` merge commit `dcd8115e`. Worktree still exists at `.claude/worktrees/feat+env-creds-fallback`.
-- Verified live against running server: bedrock via env (200), openrouter via conf.json (auth OK, upstream 404 is openrouter-side policy), header override beats conf.json (401 on invalid header = forwarded correctly), no-creds → clean 400.
+Pre-commit / pre-push hook failures fixed across 6 commits on branch `worktree-fix-pre-commit-hook` (off `dcd8115e`):
+
+- `a635678b` chore(husky): mark `.husky/pre-commit` and `.husky/pre-push` executable (silent skip was masking hook runs)
+- `5fc5e6f8` chore(prettier): add `graphify-out`, `.claude`, `llms` to `.prettierignore`
+- `79cc3dd2` fix(config): restore `conf.json` with safe defaults (`{cache:false, plugins_enabled:["default","portkey"], integrations:[]}`); retarget `.gitignore` to `conf.local.json`
+- `bd611dff` fix(pre-push): `start-test.js` picks free ephemeral port via `net.createServer`; honors `PORT` env in `src/start-server.ts`; exit handler no longer treats intentional kill as failure
+- `ada65698` fix(tests): update `jest.mock()` paths in 5 test files broken by refactor `a89171ab` (cacheService, hooksService, providerContext, requestContext [+2 require() calls L726/L746], responseService)
+- `2b6d9215` fix(tests): `tests/integration/src/handlers/requestBuilder.ts` falls back to `.creds.example.json` when `.creds.json` absent
+
+Worktree closed cleanly via `ExitWorktree action:keep`. Branch + commits preserved on disk at `.claude/worktrees/fix-pre-commit-hook`.
 
 ## Current file state
 
-- **Modified (unstaged on main, restored from stash):** `initializeSettings.ts`, `plugins/bedrock/util.ts`, `src/index.ts`, `src/providers/bedrock/api.ts` — pre-existing user work unrelated to this feature.
-- **Untracked:** `.claude/` (worktree metadata, local), `docs/architecture/`
-- **Branch status vs origin/main:** ahead by 3 commits (`0ebf923b` docs + `f0363c5c` feat + `dcd8115e` merge). Not pushed.
+- **Modified (unstaged on main):** `.husky/pre-commit`, `.husky/pre-push` — carry-over perm-fix noise from prior session; worktree branch has the real fix committed
+- **Untracked:** `.claude/` (worktree metadata)
+- **Branch status vs origin/main:** main unchanged since last session (still +3 unpushed). Worktree branch `worktree-fix-pre-commit-hook` is +6 ahead of `dcd8115e`, NOT merged to main.
 
 ## Pending TODOs
 
-- [ ] `git push origin main` to publish the 3 unpushed commits
-- [ ] Rotate leaked credentials in local `conf.json` (Portkey API key, OpenRouter key, AWS access/secret) — still plaintext, gitignored but compromised
-- [ ] Decide fate of dirty files in main: `initializeSettings.ts`, `plugins/bedrock/util.ts`, `src/index.ts`, `src/providers/bedrock/api.ts`
-- [ ] Remove worktree when merge confirmed stable: `git worktree remove .claude/worktrees/feat+env-creds-fallback`
-- [ ] (Optional) Remove redundant `envCreds` block from `src/providers/bedrock/api.ts` — resolver now supplies creds upstream, block is defense-in-depth only
+- [ ] Merge `worktree-fix-pre-commit-hook` into main (`git merge --no-ff worktree-fix-pre-commit-hook`)
+- [ ] `git push origin main` — now +9 commits pending after merge
+- [ ] Fix 4 deferred stale tests (genuine API drift, not path issues):
+  - `preRequestValidatorService.test.ts` — expects `.status` on return type
+  - `responseService.test.ts` — constructor arity 2 vs 4
+  - `providerContext.test.ts` — params field assertion mismatch
+  - `requestContext.test.ts` — behavior drift
+- [ ] Carry-over: rotate leaked creds in `conf.json` (Portkey, OpenRouter, AWS)
+- [ ] Carry-over: resolve dirty files in main (`initializeSettings.ts`, `plugins/bedrock/util.ts`, `src/index.ts`, `src/providers/bedrock/api.ts`)
+- [ ] Carry-over: remove prior `feat+env-creds-fallback` worktree
+- [ ] Remove `fix-pre-commit-hook` worktree once branch merged: `git worktree remove .claude/worktrees/fix-pre-commit-hook`
 
 ## Open bugs / concerns
 
-- OpenRouter returning 404 "No endpoints available matching your guardrail restrictions and data policy" — upstream openrouter.ai account config issue, not gateway. Fix via https://openrouter.ai/settings/privacy.
-- Workerd runtime (`npm run dev`) unsupported. Module-level `process.env` fails under wrangler. `env(c)` refactor + `.dev.vars` needed if workerd ever required.
-- `conf.json.integrations[].slug` field is dead code — reserved for future multi-integration-per-provider dispatch; not wired.
+- 4 stale tests above — NOT regressions from this session's fixes; they already failed pre-session. User chose to defer.
+- Carry-over: OpenRouter 404 (upstream privacy policy)
+- Carry-over: workerd runtime unsupported (`process.env` at module load)
 
 ## Key decisions
 
 | # | Decision | Rationale |
 |---|----------|-----------|
-| 1 | Node runtime only | User runs `dev:node`; workerd `process.env` broken at module load |
-| 2 | Precedence: headers > conf.json > env | Headers = per-request override; conf.json = team default; env = machine/deploy default |
-| 3 | Resolver in `handlerUtils.ts`, not per-provider | Single choke point; no edits to 69 provider api.ts files |
-| 4 | Generic `ENV_MAP` over per-provider hacks | Adding a new provider = one entry, no new code |
-| 5 | `dotenv/config` at entry over `--env-file` flag | One mechanism covers `dev:node`, `start:node`, future jest setup |
-| 6 | Slug field left in conf.json but unused | Reserved for future without breaking current shape |
-| 7 | Fast-path merge (stash → merge → pop) | User has unrelated dirty files on main; clean merge wanted |
+| 1 | Restore `conf.json` with safe defaults + retarget `.gitignore` to `conf.local.json` | 2 files still import `conf.json`; build broken otherwise. Functionally equivalent to `git assume-unchanged`. |
+| 2 | Minimal-scope test path fix, defer deeper test failures | User asked for path fixes only; API drift is separate work |
+| 3 | Free ephemeral port over hardcoded 8787 | Prior EADDRINUSE when dev server running concurrently |
+| 4 | Honor `PORT` env in `start-server.ts` alongside `--port=` flag | `start-test.js` passes via env; no CLI parsing collision |
+| 5 | Worktree kept open (not removed) after exit | 6 commits preserved on branch until user merges |
+| 6 | Prior session Key decisions (env-creds-fallback) still valid | Carried forward below |
+
+### Carried forward from 2026-04-23 session
+
+| # | Decision | Rationale |
+|---|----------|-----------|
+| C1 | Node runtime only | workerd `process.env` broken at module load |
+| C2 | Precedence: headers > conf.json > env | Per-request > team default > machine default |
+| C3 | Resolver in `handlerUtils.ts`, not per-provider | Single choke point |
+| C4 | Generic `ENV_MAP` over per-provider hacks | Adding provider = one entry |
+| C5 | `dotenv/config` at entry over `--env-file` flag | One mechanism across node/jest |
 
 ## Recap suggestions
 
-- Push main: `git push origin main` — 3 commits pending
-- Rotate the exposed credentials before anyone else clones the worktree
-- Verify feature still works post-merge on main (port 8787 already running tsx watch; should pick up changes)
-- Decide whether to drop redundant `envCreds` block from `src/providers/bedrock/api.ts`
-
-## Open plan files
-
-- `/Users/mk/.claude/plans/delegated-greeting-hummingbird.md`: approved, all tasks except verification complete; verification done; plan file can be archived/deleted.
+- Merge `worktree-fix-pre-commit-hook` into main before pushing
+- Push main after merge (9 commits pending)
+- Address the 4 deferred stale tests as their own branch — they're API drift, not infrastructure
+- Rotate exposed credentials before the next clone
