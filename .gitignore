@@ -1,5 +1,6 @@
-# Local configuration file
-conf.json
+# Local configuration overrides. Ship defaults via the tracked conf.json
+# (safe empty defaults); load real secrets through environment variables.
+conf.local.json
 
 # Logs
 logs

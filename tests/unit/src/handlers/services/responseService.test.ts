@@ -12,7 +12,7 @@ import {
 } from '../../../../../src/globals';
 
 // Mock dependencies
-jest.mock('../../responseHandlers');
+jest.mock('../../../../../src/handlers/responseHandlers');
 jest.mock('hono/adapter');
 
 describe('ResponseService', () => {
